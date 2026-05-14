@@ -24,7 +24,7 @@ def ingest_all_mhtml(input_dir, output_dir):
 					has_html = True
 					payload = part.get_payload(decode=True)
 					html = payload.decode("utf-8", errors="replace")
-
+					
 					output_file = output_dir / (file.stem + ".html")
 					with open(output_file, "w") as out_f:
 						out_f.write(html)

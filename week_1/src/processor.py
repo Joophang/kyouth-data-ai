@@ -35,6 +35,10 @@ def process_all_html(input_dir, output_dir):
 			if source_id_tag:
 				source_id_url = source_id_tag.get("content", "")
 				source_id = source_id_url.rstrip("/").split("/")[-1]
+				if not source_id:
+					print(f"⚠️  Missing source_id in: {file.name}");
+					continue
+
 			else:
 				print(f"⚠️  Missing source_id in: {file.name}")
 				continue
@@ -42,6 +46,9 @@ def process_all_html(input_dir, output_dir):
 			job_title_tag = soup.find(attrs = {"data-automation": "job-detail-title"})
 			if job_title_tag:
 				job_title = job_title_tag.get_text(separator=" ", strip=True)
+				if not job_title:
+					print(f"⚠️  Missing job title in: {file.name}");
+					continue
 				# print(job_title)
 			else:
 				print(f"⚠️  Missing job title in: {file.name}")
@@ -51,7 +58,9 @@ def process_all_html(input_dir, output_dir):
 			description_tag = soup.find(attrs = {"data-automation": "jobAdDetails"})
 			if description_tag:
 				description = description_tag.get_text(separator=" ", strip=True)
-				# print(description[:100] + "...")
+				if not description:
+					print(f"⚠️  Missing description in: {file.name}");
+					continue
 			else:
 				print(f"⚠️  Missing description in: {file.name}")
 				continue
@@ -59,12 +68,11 @@ def process_all_html(input_dir, output_dir):
 			company_tag = soup.find(attrs = {"data-automation": "advertiser-name"})
 			if company_tag:
 				company = company_tag.get_text(separator=" ", strip=True)
-				# print(company)
+				if not company:
+					print(f"⚠️  Missing company in: {file.name}");
+					continue
 			else:
 				print(f"⚠️  Missing company in: {file.name}")
-				continue
-
-			if (not source_id) or (not job_title) or (not description) or (not company):
 				continue
 
 			processed_count += 1
@@ -80,7 +88,7 @@ def process_all_html(input_dir, output_dir):
 
 			with open(output_file, "w", encoding="utf-8") as out_f:
 				json.dump(job.model_dump(), out_f, ensure_ascii=False, indent=4)
-			print(f"✅ Processed: {file.name}")
+			# print(f"✅ Processed: {file.name}")
 
 	print("\n📊 Silver Summary:")
 	print(f"Total: {total} | Processed: {processed_count} | Skipped: {total - processed_count}")
