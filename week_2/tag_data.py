@@ -76,7 +76,7 @@ def tag_data(db_url: str):
 			
 			for attempt in range(1, RETRY_LIMIT + 1):
 				try:
-					response_text = prompt_model( "gemini-2.5-flash-lite", prompt)
+					response_text = prompt_model( "gemini-2.5-flash", prompt)
 
 					if (
 						not response_text
