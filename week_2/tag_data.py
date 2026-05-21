@@ -51,7 +51,8 @@ def parse_response(response_text : str) -> dict[str, str]:
 	
 def tag_data(db_url: str):
 
-	load_dotenv()  # Load environment variables from .env file
+	# load environment variables from .env file
+	load_dotenv()  
 	try:
 		conn = sqlite3.connect(db_url)
 		cursor = conn.cursor()
@@ -60,8 +61,10 @@ def tag_data(db_url: str):
 		cursor.execute("UPDATE jobs SET tech_stack = NULL")
 		conn.commit()
 
+		# process jobs in batches
 		while True:
 
+			# exttract src_id and description for jobs that have not been tagged yet
 			cursor.execute("""
 					SELECT source_id, description FROM jobs WHERE tech_stack IS NULL OR tech_stack = '' LIMIT ?
 					""", (BATCH_SIZE,))
@@ -69,18 +72,21 @@ def tag_data(db_url: str):
 			jobs = cursor.fetchall()
 
 			if not jobs:
-				print("No jobs found that require tagging.")
+				# print("No jobs found that require tagging.")
 				break
 
+			# build the prompt for the current batch of jobs
 			prompt = build_prompt(jobs)
 
 			# flag to track if the batch was successfully processed (after retries)
 			success = False
 			
+			# allow 3 retries for each batch in case of failures
 			for attempt in range(1, RETRY_LIMIT + 1):
 				try:
 					response_text = prompt_model( "gemini-2.5-flash", prompt)
-
+					
+					# check for common error indicators in the response
 					if (
 						not response_text
 						or "Error:" in response_text
@@ -91,14 +97,17 @@ def tag_data(db_url: str):
 						print(f"[Batch] Attempt {attempt}: failed: {response_text}")
 						time.sleep(RETRY_DELAY)
 						continue
-
+					
+					# get the parsed response as a dictionary mapping source_id to tech_stack
 					parsed_response = parse_response(response_text)
 
+					# check if the number of parsed responses matches the number of jobs in the batch
 					if len(parsed_response) != len(jobs):
 						print(f"[Batch] Attempt {attempt}: Mismatch in number of responses. Expected {len(jobs)}, got {len(parsed_response)}. Response: {response_text}")
 						time.sleep(RETRY_DELAY)
 						continue
-
+					
+					# update the database with the extracted tech stack for each job in the batch
 					for source_id, _ in jobs:
 						source_id_str = str(source_id)
 						tech_stack = parsed_response.get(source_id_str, "")
@@ -117,6 +126,7 @@ def tag_data(db_url: str):
 					print(f"[Batch] Attemp {attempt} failed: {str(e)}")
 					time.sleep(RETRY_DELAY)
 			
+			# if the current batch was failed after all retries, skip to the next batch
 			if not success:
 				print(f"[Batch] Attemp {attempt} failed: {str(e)}")
 				break
@@ -125,6 +135,6 @@ def tag_data(db_url: str):
 		print(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    tag_data("jobs_d1.db")	
+    tag_data("data/jobs_d1.db")	
 
 	

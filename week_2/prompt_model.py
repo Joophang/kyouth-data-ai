@@ -7,7 +7,6 @@ import requests
 SUPPORTED_MODELS = { "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3-flash-preview"}
 SUPPORTED_LOCAL_MODELS = {"deepseek-r1:1.5b", "phi3:latest"}
 
-
 def prompt_gemini(model: str, prompt: str) -> str:
 
 	load_dotenv()
@@ -33,14 +32,17 @@ def prompt_gemini(model: str, prompt: str) -> str:
 	# generate content
 	response = client.models.generate_content(model=selected_model, contents=prompt)
 
+	# return the generated text if available, otherwise return an error message
 	if response and response.text:
 		return response.text
 	else:
 		return "No text response received from the model."
 	
 def prompt_local_model(model: str, prompt: str) -> str:
+	# define the URL for the local model API
 	url = "http://localhost:11434/api/generate"
 	
+	# build the request payload
 	response = requests.post(
         url,
         json={
@@ -50,11 +52,13 @@ def prompt_local_model(model: str, prompt: str) -> str:
         },
         timeout=60,
     )
+	# check if the request was successful
 	response.raise_for_status()	
+
+	# parse the response JSON and return the generated text
 	data = response.json()
 	# print(data)
 	return data.get("response", "No text response received from the local model.")
-
 
 def prompt_model(model: str, prompt: str) -> str :
 	try:
