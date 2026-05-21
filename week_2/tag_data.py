@@ -33,7 +33,7 @@ def build_prompt(jobs):
 
 	return prompt
 
-def parse_response(response_text):
+def parse_response(response_text : str) -> dict[str, str]:
 	results = {}
 
 	for line in response_text.splitlines():
@@ -50,6 +50,7 @@ def parse_response(response_text):
 	return results
 	
 def tag_data(db_url: str):
+
 	load_dotenv()  # Load environment variables from .env file
 	try:
 		conn = sqlite3.connect(db_url)
@@ -72,6 +73,8 @@ def tag_data(db_url: str):
 				break
 
 			prompt = build_prompt(jobs)
+
+			# flag to track if the batch was successfully processed (after retries)
 			success = False
 			
 			for attempt in range(1, RETRY_LIMIT + 1):
@@ -115,7 +118,7 @@ def tag_data(db_url: str):
 					time.sleep(RETRY_DELAY)
 			
 			if not success:
-				print("Skipping failed batch")
+				print(f"[Batch] Attemp {attempt} failed: {str(e)}")
 				break
 
 	except Exception as e:

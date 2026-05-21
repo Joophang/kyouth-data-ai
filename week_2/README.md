@@ -22,8 +22,6 @@ The project focuses on:
 - Structured data processing
 - Error handling and resilience
 
-
-
 # Setup Instructions
 
 ## Prerequisites
@@ -53,7 +51,7 @@ run:
 	```source .venv/bin/activate```.
 
 ## Install Dependencies
-```uv add google-generativeai python-dotenv pydantic```
+```uv add google-genai python-dotenv pydantic```
 
 ## Environment Variables
 Create a .env file at the project root:
