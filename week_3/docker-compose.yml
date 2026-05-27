@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: week3_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    networks:
+      - week3_network
+
+  frontend:
+    build: ./frontend
+    container_name: week3_frontend
+    ports:
+      - "8080:8000"
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+    depends_on:
+      - backend
+    networks:
+      - week3_network
+
+networks:
+  week3_network:
+    driver: bridge
