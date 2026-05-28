@@ -77,7 +77,7 @@ def find_skill_gaps(resume_txt: str, db_url: str) -> SkillGapResult:
 		required_skills = get_required_skills(db_url)
 		resume_skills = get_resume_skills(resume_txt, required_skills)
 		gaps = sorted(required_skills - resume_skills)
-		print(f"Required skills: {gaps}")
+		# print(f"Required skills: {gaps}")
 		return SkillGapResult(gaps=gaps)
 	
 	except Exception as e:

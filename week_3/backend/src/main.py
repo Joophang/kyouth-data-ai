@@ -18,11 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class ChatRequest(BaseModel):
     message: str
     pdf_text: str = ""
-
 
 def is_skill_gap_request(message: str) -> bool:
     message = message.lower()
@@ -42,8 +40,11 @@ def is_skill_gap_request(message: str) -> bool:
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
+    if (not request.message) and (not request.pdf_text):
+        return {"reply": "Please provide a message or resume content."}
     try:
-        if is_skill_gap_request(request.message):
+
+        if is_skill_gap_request(request.message) and request.pdf_text:
             db_url = BASE_DIR / "week_2" / "data" / "jobs_d3_eval.db"
 
             result = find_skill_gaps(
@@ -53,6 +54,16 @@ async def chat(request: ChatRequest):
             return {
                 "reply": f"Your skill gaps are: {', '.join(result.gaps)}"
             }
+
+        if (request.message) and (not request.pdf_text):
+            full_prompt = f"""User message:
+            {request.message}
+            """
+            reply = prompt_model(
+                model="gemini-2.5-flash-lite",
+                prompt=full_prompt,
+            )
+            return {"reply": reply}
 
         full_prompt = f"""
             User message:
