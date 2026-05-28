@@ -1,0 +1,8 @@
+backend/src/__pycache__/
+backend/.venv/
+
+frontend/src/__pycache__/
+frontend/.venv/
+
+.env
+.ruff_cache/
