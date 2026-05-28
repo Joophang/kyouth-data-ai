@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 from week_2.prompt_model import prompt_model
+from week_2.find_skill_gaps import find_skill_gaps
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI()
 
@@ -13,29 +18,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class ChatRequest(BaseModel):
     message: str
     pdf_text: str = ""
 
+
+def is_skill_gap_request(message: str) -> bool:
+    message = message.lower()
+
+    keywords = [
+        "skill gap",
+        "skill gaps",
+        "missing skill",
+        "missing skills",
+        "gap analysis",
+        "what skills am i missing",
+        "skills missing",
+    ]
+
+    return any(keyword in message for keyword in keywords)
+
+
 @app.post("/chat")
 async def chat(request: ChatRequest):
-
-    full_prompt = f"""
-User message:
-{request.message}
-
-Resume content:
-{request.pdf_text}
-"""
-    # print(f"Received chat request with message: {request.message} and PDF text : {request.pdf_text}")
     try:
-        reply = prompt_model(model="gemini-2.5-flash-lite", prompt=full_prompt)
+        if is_skill_gap_request(request.message):
+            db_url = BASE_DIR / "week_2" / "data" / "jobs_d3_eval.db"
 
-        return {
-            "reply": reply
-        }
+            result = find_skill_gaps(
+                resume_txt=request.pdf_text,
+                db_url=str(db_url))
+
+            return {
+                "reply": f"Your skill gaps are: {', '.join(result.gaps)}"
+            }
+
+        full_prompt = f"""
+            User message:
+            {request.message}
+
+            Resume content:
+            {request.pdf_text}
+            """
+
+        reply = prompt_model(
+            model="gemini-2.5-flash-lite",
+            prompt=full_prompt,
+        )
+
+        return {"reply": reply}
 
     except Exception as e:
-        return {
-            "reply": f"Backend error: {str(e)}"
-        }
+        return {"reply": f"Backend error: {str(e)}"}
